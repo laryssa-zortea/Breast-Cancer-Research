@@ -1,0 +1,56 @@
+ALGORITMO: CURADORIA, FILTRAGEM E PREVENÇÃO DE VAZAMENTO DE DADOS
+
+Entradas:
+    dir_origem: Diretório com os arquivos JPG e máscaras PNG convertidos.
+    dir_csv: Diretório contendo os arquivos de metadados (CSV).
+    dir_destino: Diretório final para armazenar a base de segmentação filtrada.
+
+Saída:
+    Base de dados pareada (imagem completa + máscara), com contagem auditada por
+    pacientes e por imagens, livre de vazamento de dados (data leakage) entre 
+    os conjuntos de Treino e Teste.
+
+Procedimento Principal:
+
+1. ETAPA 1: AUDITORIA E FILTRAGEM INICIAL
+   1.1. Varrer o dir_origem e classificar as pastas em:
+        - Completas: pastas sem sufixo numérico no final.
+        - ROIs: pastas com sufixo numérico.
+   1.2. Extrair o ID do paciente a partir do nome da pasta.
+   1.3. Executar auditoria por pacientes:
+        - Contar pacientes com completas.
+        - Contar pacientes com ROIs.
+        - Contar pacientes com ambos e pacientes com apenas um dos tipos.
+        - Exibir os resultados para validação com a análise exploratória (EDA).
+   1.4. Executar auditoria por imagens (pastas):
+        - Identificar mamografias completas válidas (aquelas que possuem ao menos uma ROI filha).
+        - Identificar ROIs órfãs (aquelas cuja mamografia completa não existe no diretório).
+   1.5. Criar o dir_destino.
+   1.6. Para cada mamografia completa válida e suas respectivas ROIs, copiar as pastas do dir_origem para o dir_destino.
+
+2. ETAPA 2: TRATAMENTO DE VAZAMENTO DE DADOS (DATA LEAKAGE)
+   2.1. Carregar os arquivos CSV de treino e teste e concatená-los.
+   2.2. Criar uma chave de identificação única de imagem combinando os campos: 
+        ID do Paciente + Lado + Vista (ex: P_00001_LEFT_CC).
+   2.3. Identificar a interseção das chaves de imagem entre os conjuntos 'Training' e 'Test'.
+   2.4. Para cada chave duplicada, localizar a pasta correspondente no conjunto 'Test' dentro do dir_destino e excluí-la.
+   2.5. Registrar o número de mamografias removidas e os pacientes afetados.
+
+3. ETAPA 3: LIMPEZA DE DIRETÓRIOS ÓRFÃOS
+   3.1. Varrer o dir_destino em busca de ROIs.
+   3.2. Para cada ROI, extrair o nome da mamografia completa correspondente (removendo o sufixo numérico).
+   3.3. Se a pasta da mamografia completa não existir mais (pois foi excluída na Etapa 2), excluir a pasta da ROI.
+   3.4. Atualizar a lista de pastas.
+   3.5. Varrer o dir_destino em busca de mamografias completas.
+   3.6. Se uma mamografia completa não possuir nenhuma ROI filha, excluí-la.
+
+4. ETAPA 4: VERIFICAÇÃO FINAL DE INTEGRIDADE
+   4.1. Contar o total de pastas de mamografias completas e de ROIs restantes.
+   4.2. Extrair e contar o número de pacientes únicos presentes na base final.
+   4.3. Executar checagem de integridade referencial:
+        - Garantir que toda ROI possua sua mamografia completa.
+        - Garantir que toda mamografia completa possua ao menos uma ROI.
+   4.4. Executar checagem estrutural de arquivos:
+        - Verificar se cada pasta de ROI contém exatamente 1 arquivo JPG e 1 arquivo PNG.
+        - Verificar se cada pasta de mamografia completa contém exatamente 1 arquivo JPG.
+   4.5. Exibir o resumo final da base de dados.

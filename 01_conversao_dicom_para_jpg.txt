@@ -1,0 +1,34 @@
+ALGORITMO: CONVERSÃO E PADRONIZAÇÃO DO CBIS-DDSM (DICOM -> JPG/PNG)
+
+Entradas:
+    dir_origem: diretório raiz dos arquivos DICOM.
+    dir_destino: diretório para salvar os arquivos convertidos.
+    qualidade_jpg: parâmetro de compressão (95).
+
+Saída:
+    Arquivos .jpg (imagens) e .png (máscaras) com estrutura de pastas preservada.
+
+Procedimento Principal:
+1. Para cada pasta em dir_origem contendo "Mass-" ou "Calc-" no nome:
+    1.1. Criar a pasta correspondente em dir_destino.
+    1.2. Para cada arquivo DICOM nesta pasta:
+        1.2.1. Ler a matriz de pixels via pydicom.
+        1.2.2. Se VerificarMascara(imagem) for Verdadeiro:
+            - Binarizar a matriz (pixels > 0 recebem valor 255).
+            - Salvar como arquivo "_mask.png".
+        1.2.3. Senão:
+            - Se a imagem for 16 bits (max > 255), aplicar Normalizar16Bit(imagem).
+            - Salvar como arquivo ".jpg" com a qualidade_jpg definida.
+2. Executar verificação de integridade comparando a contagem de arquivos de entrada e saída.
+
+Função VerificarMascara(imagem):
+    // Identifica se o DICOM é uma anotação binária em vez de mamografia
+    1. Contar a quantidade de valores únicos na matriz.
+    2. Retornar Verdadeiro se a quantidade for <= 3, e Falso caso contrário.
+
+Função Normalizar16Bit(imagem):
+    // Reduz a profundidade de 16 para 8 bits preservando o contraste do tecido mamário
+    1. Calcular o percentil 1 (p1) e o percentil 99 (p99) da matriz.
+    2. Truncar os valores da imagem entre p1 e p99.
+    3. Re-escalonar os valores linearmente para o intervalo [0, 255].
+    4. Retornar a matriz convertida para inteiro de 8 bits.
