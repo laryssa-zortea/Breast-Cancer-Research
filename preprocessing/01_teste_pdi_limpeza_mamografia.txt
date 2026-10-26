@@ -1,0 +1,32 @@
+ALGORITMO: PRÉ-PROCESSAMENTO E ISOLAMENTO DA MAMA (PDI)
+
+Entradas:
+    dir_imagens: Diretório contendo as mamografias originais.
+
+Saída:
+    Imagens limpas, contendo apenas o tecido mamário, com fundo e artefatos removidos.
+
+Procedimento Principal:
+1. Para cada imagem no diretório:
+   1.1. Ler a imagem em escala de cinza (Matriz 2D).
+   1.2. APLICAR CORTE DE BORDAS (Padding):
+        - Definir uma margem M de 50 pixels.
+        - Substituir os M pixels das extremidades superior, inferior, esquerda e direita por 0 (preto).
+   1.3. APLICAR DESFOQUE GAUSSIANO (Gaussian Blur):
+        - Utilizar um kernel alto 81x81 para dissolver textos e ruídos finos.
+   1.4. APLICAR BINARIZAÇÃO DE OTSU:
+        - Calcular o limiar ótimo automaticamente.
+        - Converter a imagem para preto (fundo) e branco (tecido mamário).
+   1.5. APLICAR ABERTURA MORFOLÓGICA:
+        - Utilizar um kernel 31x31 para erodir e dilatar a imagem.
+        - Objetivo: remover pequenos resquícios de texto e ruídos.
+   1.6. ENCONTRAR O MAIOR CONTORNO:
+        - Buscar todos os contornos na imagem binarizada.
+        - Filtrar pelo contorno que possui a maior área (o tecido mamário).
+   1.7. APLICAR CONVEX HULL:
+        - Criar uma envoltória convexa sobre o maior contorno para suavizar as bordas.
+   1.8. APLICAR DILATAÇÃO (Margem de Segurança):
+        - Dilatar o contorno (kernel 35x35) para garantir que as bordas da mama não sejam cortadas.
+   1.9. APLICAR A MÁSCARA:
+        - Utilizar a máscara gerada para fazer uma operação "E" lógico com a imagem ORIGINAL.
+        - O resultado é a imagem original, mas com tudo que está fora da máscara transformado em preto.
